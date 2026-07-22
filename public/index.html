@@ -154,7 +154,8 @@
   /* Insight stats */
   .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:clamp(20px,3vw,48px); }
   .stat { border-top:1px solid var(--line); padding-top:clamp(14px,2vw,24px); }
-  .stat b { display:block; font-size:clamp(40px,5.5vw,72px); font-weight:700; color:var(--hi); letter-spacing:-.02em; line-height:1; }
+  /* Tabular figures so the number doesn't jitter in width while it counts up. */
+  .stat b { display:block; font-size:clamp(40px,5.5vw,72px); font-weight:700; color:var(--hi); letter-spacing:-.02em; line-height:1; font-variant-numeric:tabular-nums; }
   .stat span { display:block; font-size:clamp(14px,1.5vw,18px); color:var(--dim); line-height:1.45; margin-top:10px; }
   .sec-note { margin:clamp(28px,4vw,52px) 0 0; font-size:clamp(16px,1.8vw,21px); line-height:1.55; color:var(--dim); max-width:56ch; }
   .sec-note b { color:var(--ink); }
@@ -220,7 +221,7 @@
     .flow-cards .arrow { transform:rotate(90deg); justify-self:center; }
   }
   .steps { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
-  .step { border:1px solid var(--line); border-radius:12px; padding:16px 14px; background:rgba(22,35,46,.03); text-align:center; font-size:clamp(13px,1.4vw,16px); line-height:1.35; }
+  .step { position:relative; border:1px solid var(--line); border-radius:12px; padding:16px 14px; background:rgba(22,35,46,.03); text-align:center; font-size:clamp(13px,1.4vw,16px); line-height:1.35; }
   .step .num { display:block; font-family:'Spline Sans Mono',monospace; font-size:clamp(12px,1.2vw,14px); color:var(--dim); margin-bottom:6px; }
   .step small { display:block; color:var(--dim); font-size:.9em; margin-top:6px; }
   .step.gate { border-color:var(--hi); background:rgba(154,109,20,.07); }
@@ -287,7 +288,44 @@
      so nothing is ever hidden without something running to reveal it.
      `--s` staggers items that share a grid row. --- */
   .rv-on > *:not(.rv, .rv-grid) { opacity:0; }
-  .rv-on > .in { animation:rise-in .8s var(--ease-out-expo) both; animation-delay:calc(var(--s,0) * .09s); }
+  /* `backwards`, not `both`: a filling animation keeps applying its final
+     transform forever, and animations outrank transitions — which would leave
+     every revealed card unable to lift on hover. Backwards covers the delay,
+     and the explicit opacity holds the element once the animation lets go. */
+  .rv-on > .in {
+    opacity:1; animation:rise-in .8s var(--ease-out-expo) backwards;
+    animation-delay:calc(var(--s,0) * .09s);
+  }
+
+  /* --- The three human gates pulse a gold ring as they land, so the
+     human-in-the-loop beat reads visually and not just as a label. --- */
+  .step.gate::after {
+    content:""; position:absolute; inset:-1px; border-radius:inherit;
+    border:1px solid var(--hi); opacity:0; pointer-events:none;
+  }
+  .rv-on > .step.gate.in::after {
+    animation:gate-ring 1.5s var(--ease-out-expo) both;
+    animation-delay:calc(var(--s,0) * .09s + .45s);
+  }
+  @keyframes gate-ring {
+    0%   { opacity:0; transform:scale(1); }
+    22%  { opacity:.85; }
+    100% { opacity:0; transform:scale(1.07); }
+  }
+
+  /* --- Card surfaces answer the cursor. Hover only — on touch there is no
+     hover to leave, and a stuck lift reads as a broken tap. `.flow-cards .fcard`
+     is deliberately absent: it holds chips that lift on their own, and lifting
+     both compounds the movement. --- */
+  @media (hover: hover) {
+    :is(.repo-card, .idea-cards .fcard, .pill, .chip, .step) {
+      transition:transform .3s var(--ease-spring), box-shadow .3s ease;
+    }
+    :is(.repo-card, .idea-cards .fcard, .pill, .chip, .step):hover {
+      transform:translateY(-3px);
+      box-shadow:0 10px 24px -12px rgba(22,35,46,.28);
+    }
+  }
 
   /* --- The map draws itself outward from Cayman --- */
   .map-wrap.seq .link { stroke-dasharray:1; stroke-dashoffset:1; }
@@ -688,6 +726,36 @@
         if (staggered) child.style.setProperty('--s', i % 4);
         revealIO.observe(child);
       });
+    });
+  }
+
+  // The market numbers count up as they land — they carry the argument, so
+  // they should arrive like it. The authored figure stays in the HTML and is
+  // restored verbatim at the end, so with no JS (or reduced motion) the right
+  // number, comma and suffix are simply already on the page.
+  if (!reduced) {
+    document.querySelectorAll('.stat b').forEach(el => {
+      const final = el.textContent;
+      const parts = final.match(/^([\d,]+)(.*)$/s);
+      if (!parts) return;
+      const target = Number(parts[1].replace(/,/g, ''));
+      const suffix = parts[2];
+      if (!target) return;
+      onceInView(el.closest('.stat'), () => {
+        const started = performance.now();
+        const frame = now => {
+          const t = Math.min((now - started) / 1100, 1);
+          const eased = 1 - Math.pow(1 - t, 3);
+          if (t < 1) {
+            el.textContent = Math.round(target * eased).toLocaleString('en-US') + suffix;
+            requestAnimationFrame(frame);
+          } else {
+            el.textContent = final;
+          }
+        };
+        el.textContent = '0' + suffix;
+        requestAnimationFrame(frame);
+      }, .5);
     });
   }
 
