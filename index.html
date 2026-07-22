@@ -5,6 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tradewind — One profile, every island.</title>
 <meta name="description" content="The Caribbean labour rail — agentic infrastructure that moves the region's workers into the region's jobs.">
+<link rel="canonical" href="https://caribbean.work/">
+<meta name="theme-color" content="#f6f2ea">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Tradewind">
+<meta property="og:url" content="https://caribbean.work/">
+<meta property="og:title" content="Tradewind — One profile, every island.">
+<meta property="og:description" content="The Caribbean labour rail — agentic infrastructure that moves the region's workers into the region's jobs.">
+<meta property="og:image" content="https://caribbean.work/uploads/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1648">
+<meta property="og:image:height" content="840">
+<meta property="og:image:alt" content="Tradewind — one profile, every island. The Caribbean labour rail.">
+<meta property="og:locale" content="en">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tradewind — One profile, every island.">
+<meta name="twitter:description" content="The Caribbean labour rail — agentic infrastructure that moves the region's workers into the region's jobs.">
+<meta name="twitter:image" content="https://caribbean.work/uploads/og-image.png">
+<meta name="twitter:image:alt" content="Tradewind — one profile, every island. The Caribbean labour rail.">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Instrument+Serif&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -13,7 +34,7 @@
     --line:rgba(22,35,46,.16); --card:rgba(22,35,46,.045);
     --acc:#d4502e; --hi:#9a6d14; --pos:#0e8577;
     --display-font:'Archivo',sans-serif; --display-weight:700; --display-track:-0.02em;
-    --nav-h:64px;
+    --nav-h:64px; --sec-pad:clamp(64px,9vw,120px); --anchor-gap:28px;
   }
   * { box-sizing:border-box; }
   html { scroll-behavior:smooth; }
@@ -25,7 +46,13 @@
 
   .kicker { font-family:'Spline Sans Mono',monospace; font-size:clamp(12px,1.1vw,15px); letter-spacing:.32em; text-transform:uppercase; color:var(--acc); font-weight:600; }
 
-  section { position:relative; padding:clamp(64px,9vw,120px) clamp(20px,6vw,90px); scroll-margin-top:var(--nav-h); overflow:hidden; }
+  /* Anchored sections land with their content just under the nav, not a
+     screenful of the section's own top padding. */
+  section { position:relative; padding:var(--sec-pad) clamp(20px,6vw,90px); overflow:hidden;
+            scroll-margin-top:calc(var(--nav-h) + var(--anchor-gap) - var(--sec-pad)); }
+  section.hero { scroll-margin-top:var(--nav-h); }
+  /* The last section needs enough height to scroll up under the nav like the rest. */
+  section:last-of-type { min-height:calc(100vh - var(--nav-h) - var(--anchor-gap)); }
   .wrap { max-width:1200px; margin:0 auto; position:relative; }
   section:nth-of-type(even) { background:radial-gradient(120% 90% at 78% 108%, var(--bg2) 0%, var(--bg) 62%); }
 
@@ -40,10 +67,17 @@
   .brand { font-family:var(--display-font); font-weight:800; font-size:22px; letter-spacing:-0.02em; color:var(--ink); text-decoration:none; display:flex; align-items:baseline; gap:10px; }
   .brand small { font-family:'Spline Sans Mono',monospace; font-size:10px; letter-spacing:.28em; text-transform:uppercase; color:var(--acc); font-weight:600; }
   .nav-links { display:flex; align-items:center; gap:clamp(14px,2vw,28px); list-style:none; margin:0; padding:0; }
-  .nav-links a { font-size:15px; font-weight:500; color:var(--ink); text-decoration:none; opacity:.82; white-space:nowrap; }
+  .nav-links a { position:relative; font-size:15px; font-weight:500; color:var(--ink); text-decoration:none; opacity:.82; white-space:nowrap; transition:color .18s, opacity .18s; }
   .nav-links a:hover { opacity:1; color:var(--acc); }
+  .nav-links a:not(.nav-cta)::after {
+    content:""; position:absolute; left:0; right:0; bottom:-6px; height:2px;
+    background:var(--acc); border-radius:2px;
+    transform:scaleX(0); transform-origin:left; transition:transform .22s ease;
+  }
+  .nav-links a.active { opacity:1; color:var(--acc); font-weight:600; }
+  .nav-links a.active:not(.nav-cta)::after { transform:scaleX(1); }
   .nav-cta { border:1px solid var(--ink); border-radius:100px; padding:8px 18px !important; opacity:1 !important; }
-  .nav-cta:hover { background:var(--ink); color:var(--bg) !important; }
+  .nav-cta:hover, .nav-cta.active { background:var(--ink); color:var(--bg) !important; border-color:var(--ink); }
   .nav-toggle { display:none; background:none; border:1px solid var(--line); border-radius:10px; padding:8px 10px; cursor:pointer; color:var(--ink); }
   .nav-toggle svg { display:block; }
   @media (max-width: 900px) {
@@ -56,6 +90,7 @@
     }
     .nav-links.open { display:flex; }
     .nav-links a { display:block; padding:14px 24px; font-size:17px; }
+    .nav-links a:not(.nav-cta)::after { display:none; }
     .nav-cta { border:none; border-radius:0; padding:14px 24px !important; color:var(--acc) !important; font-weight:600; }
     .nav-cta:hover { background:none; }
   }
@@ -69,7 +104,8 @@
   .hero .sub { margin:clamp(14px,2vw,22px) 0 0; font-size:clamp(16px,2vw,24px); line-height:1.5; color:var(--dim); max-width:46ch; }
   .hero .kicker { margin-bottom:clamp(18px,2.5vw,32px); display:block; }
   .portrait { width:clamp(180px,24vw,320px); height:clamp(180px,24vw,320px); border-radius:50%; overflow:hidden; border:1px solid var(--line); box-shadow:0 24px 60px rgba(0,0,0,.18); background:#111; position:relative; }
-  .portrait img { position:absolute; width:140%; height:auto; left:-13%; top:1.5%; max-width:none; }
+  .portrait img { position:absolute; width:140%; height:auto; left:-13%; top:1.5%; max-width:none;
+                  filter:brightness(130%) contrast(120%); }
   .hero-foot { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px 40px; font-size:clamp(13px,1.3vw,16px); color:var(--dim); letter-spacing:.08em; margin-top:clamp(40px,6vw,80px); }
   @media (max-width: 760px) {
     .hero { min-height:0; }
@@ -425,6 +461,24 @@
   links.addEventListener('click', e => {
     if (e.target.tagName === 'A') { links.classList.remove('open'); toggle.setAttribute('aria-expanded', 'false'); }
   });
+
+  // Scroll spy: highlight the nav link for whichever section owns the band of
+  // viewport just below the nav bar.
+  const navFor = new Map();
+  links.querySelectorAll('a[href^="#"]').forEach(a => {
+    const el = document.querySelector(a.getAttribute('href'));
+    if (el) navFor.set(el, a);
+  });
+  const setActive = a => {
+    navFor.forEach(link => link.classList.toggle('active', link === a));
+  };
+  const visible = new Set();
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => e.isIntersecting ? visible.add(e.target) : visible.delete(e.target));
+    const current = [...navFor.keys()].filter(s => visible.has(s)).pop();
+    setActive(current ? navFor.get(current) : null);
+  }, { rootMargin: '-25% 0px -70% 0px' });
+  navFor.forEach((_, section) => io.observe(section));
 </script>
 </body>
 </html>
