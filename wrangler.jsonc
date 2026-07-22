@@ -5,8 +5,9 @@
   "observability": {
     "enabled": true
   },
+  // Only ./public is uploaded — keeps .git, config, and tooling out of the deploy.
   "assets": {
-    "directory": "."
+    "directory": "./public"
   },
   "compatibility_flags": [
     "nodejs_compat"
