@@ -76,6 +76,8 @@
   }
   .nav-inner { max-width:1200px; margin:0 auto; height:100%; padding:0 clamp(20px,4vw,32px); display:flex; align-items:center; justify-content:space-between; gap:24px; }
   .brand { font-family:var(--display-font); font-weight:800; font-size:22px; letter-spacing:-0.02em; color:var(--ink); text-decoration:none; display:flex; align-items:center; gap:10px; }
+  /* The wordmark is a mark, not a link — it opts out of the global gold link hover. */
+  .brand:hover { color:var(--ink); }
   .brand img { width:44px; height:44px; flex:0 0 auto; }
   .brand .brand-text { display:flex; align-items:baseline; gap:10px; }
   .brand small { font-family:'Spline Sans Mono',monospace; font-size:10px; letter-spacing:.28em; text-transform:uppercase; color:var(--acc); font-weight:600; }
