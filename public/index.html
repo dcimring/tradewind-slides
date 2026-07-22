@@ -28,6 +28,15 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Instrument+Serif&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+  // Runs before first paint so the hero can start hidden. `ready` releases the
+  // sequence once the fonts have settled, so the reveal doesn't play through a
+  // swap — or 1.2s in, whichever lands first.
+  document.documentElement.classList.add('anim');
+  var release = function () { document.documentElement.classList.add('ready'); };
+  if (document.fonts) document.fonts.ready.then(release);
+  setTimeout(release, 1200);
+</script>
 <style>
   :root {
     --bg:#f6f2ea; --bg2:#ece5d7; --ink:#16232e; --dim:#5d6d79;
@@ -48,7 +57,9 @@
 
   /* Anchored sections land with their content just under the nav, not a
      screenful of the section's own top padding. */
-  section { position:relative; padding:var(--sec-pad) clamp(20px,6vw,90px); overflow:hidden;
+  /* `clip`, not `hidden` — same clipping without making every section a scroll
+     container of its own. */
+  section { position:relative; padding:var(--sec-pad) clamp(20px,6vw,90px); overflow:clip;
             scroll-margin-top:calc(var(--nav-h) + var(--anchor-gap) - var(--sec-pad)); }
   section.hero { scroll-margin-top:var(--nav-h); }
   /* The last section needs enough height to scroll up under the nav like the rest. */
@@ -227,6 +238,97 @@
   /* Footer */
   footer { border-top:1px solid var(--line); padding:clamp(28px,4vw,44px) clamp(20px,6vw,90px); }
   .foot-inner { max-width:1200px; margin:0 auto; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px 40px; font-size:clamp(13px,1.4vw,16px); color:var(--dim); letter-spacing:.08em; }
+
+  /* ---------- Motion ----------
+     Two curves carry everything: expo-out for what travels, a gentle spring for
+     what lands. Only transform / opacity / stroke-dashoffset are animated.
+     Each sequence hides its own elements behind a class its script adds, so a
+     script that never runs leaves a fully visible page. */
+  :root {
+    --ease-out-expo: cubic-bezier(.16,1,.3,1);
+    --ease-spring: linear(0,.009,.035 2.1%,.141,.281 6.7%,.723 12.9%,.938,1.077,1.121,1.146 24.4%,1.146,1.133,1.109,1.077 32.5%,.996 38.6%,.951 43%,.938,.933,.938,.958 55.4%,1.008 68.3%,1.026,1.03,1.026,1.008 86.3%,1);
+  }
+  @keyframes rise-in   { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:none; } }
+  @keyframes logo-in   { from { opacity:0; transform:scale(.9) translateY(16px); } to { opacity:1; transform:none; } }
+  @keyframes mask-rise { from { transform:translateY(115%); } to { transform:none; } }
+  @keyframes msg-in    { from { opacity:0; transform:translateY(10px) scale(.96); } to { opacity:1; transform:none; } }
+  @keyframes pop-in    { from { opacity:0; transform:scale(0); } to { opacity:var(--o,1); transform:scale(1); } }
+  @keyframes fade-in   { from { opacity:0; } to { opacity:var(--o,1); } }
+  @keyframes draw      { from { stroke-dashoffset:1; } to { stroke-dashoffset:0; } }
+  @keyframes drift     { 0%,100% { transform:none; } 50% { transform:translateX(var(--dx)); } }
+  @keyframes ping      { from { transform:scale(.7); opacity:.55; } to { transform:scale(3.8); opacity:0; } }
+
+  /* --- Hero: held until the fonts settle so the reveal doesn't play through a swap --- */
+  .anim .hero :is(.kicker, .tag, .sub, .hero-logo, .hero-foot) { opacity:0; }
+  .anim .hero h1 { overflow:hidden; }
+  .anim .hero h1 .line { display:block; transform:translateY(115%); }
+  .hero .kicker { --i:0; } .hero .tag { --i:2; } .hero .sub { --i:3; } .hero-foot { --i:5; }
+  .anim.ready .hero :is(.kicker, .tag, .sub, .hero-foot) {
+    animation:rise-in .85s var(--ease-out-expo) both; animation-delay:calc(var(--i) * .085s);
+  }
+  .anim.ready .hero h1 .line { animation:mask-rise 1.1s var(--ease-spring) both .09s; }
+  .anim.ready .hero-logo { animation:logo-in 1.1s var(--ease-spring) both .18s; }
+
+  /* The trade wind: three lines draw in, then drift for good. */
+  .anim .hero-waves path { stroke-dasharray:1; stroke-dashoffset:1; }
+  .anim.ready .hero-waves path {
+    animation:draw 1.8s var(--ease-out-expo) both, drift var(--dur) ease-in-out infinite;
+    animation-delay:var(--d), calc(var(--d) + 1.8s);
+  }
+  .hero-waves path:nth-child(1) { --d:.15s; --dur:19s; --dx:-14px; }
+  .hero-waves path:nth-child(2) { --d:.32s; --dur:23s; --dx:11px; }
+  .hero-waves path:nth-child(3) { --d:.49s; --dur:27s; --dx:-9px; }
+
+  /* --- Scroll reveals. One-shot on entry rather than scrubbed to scroll
+     position: it doesn't play backwards when you scroll up, and it can't strand
+     content at zero opacity. `rv-on` is added by the script that observes them,
+     so nothing is ever hidden without something running to reveal it.
+     `--s` staggers items that share a grid row. --- */
+  .rv-on > *:not(.rv, .rv-grid) { opacity:0; }
+  .rv-on > .in { animation:rise-in .8s var(--ease-out-expo) both; animation-delay:calc(var(--s,0) * .09s); }
+
+  /* --- The map draws itself outward from Cayman --- */
+  .map-wrap.seq .link { stroke-dasharray:1; stroke-dashoffset:1; }
+  .map-wrap.seq :is(.node, .label) { opacity:0; }
+  .map-wrap.seq .node { transform:scale(0); transform-box:fill-box; transform-origin:center; }
+  .map-wrap.seq .ping { opacity:0; transform-box:fill-box; transform-origin:center; }
+  .map-wrap.seq.in-view .link  { animation:draw 1.2s var(--ease-out-expo) both; animation-delay:calc(.4s + var(--i) * .13s); }
+  .map-wrap.seq.in-view .node  { animation:pop-in .7s var(--ease-spring) both;  animation-delay:calc(.75s + var(--i) * .13s); }
+  .map-wrap.seq.in-view .label { animation:fade-in .6s ease both;               animation-delay:calc(1s + var(--i) * .13s); }
+  .map-wrap.seq.in-view .ping  { animation:ping 3.4s ease-out 1.4s infinite; }
+
+  /* --- The chat plays itself once, the first time it scrolls into view --- */
+  .phone.seq .msg:not(.shown) { display:none; }
+  /* The thread fills from the top down, so the first message lands where the
+     eye already is instead of the phone sitting empty until it fills up.
+     `flex:0 0 auto` matters: the base rule's `flex:1` sets flex-basis to 0,
+     which would override the locked height and collapse the thread to nothing
+     until the first message lands. */
+  .phone.seq .ph-chat { flex:0 0 auto; justify-content:flex-start; overflow:hidden; }
+  .phone.seq .msg { transform-origin:bottom left; }
+  .phone.seq .msg.out { transform-origin:bottom right; }
+  .phone.seq .msg.shown { animation:msg-in .5s var(--ease-spring) both; }
+  .phone.seq .msg.out .ticks { color:#8696a0; transition:color .35s ease; }
+  .phone.seq .msg.out.read .ticks { color:#53bdeb; }
+  /* Measuring pass: everything on screen at once so the thread's height can be
+     locked, and revealing a message grows it upward instead of resizing the page. */
+  .phone.seq .ph-chat.measure .msg { display:block; }
+  .phone.seq .ph-chat.measure .typing { display:flex; }
+  .typing { display:flex; align-items:center; gap:5px; padding:15px 16px; }
+  .typing i { width:7px; height:7px; border-radius:50%; background:#8696a0; animation:typing-dot 1.3s ease-in-out infinite; }
+  .typing i:nth-child(2) { animation-delay:.16s; } .typing i:nth-child(3) { animation-delay:.32s; }
+  @keyframes typing-dot { 0%,60%,100% { opacity:.35; transform:none; } 30% { opacity:1; transform:translateY(-3px); } }
+  .voice.playing .bars i { animation:bar-play .9s ease-in-out infinite; transform-origin:center; }
+  .voice .bars i:nth-child(3n+2) { animation-delay:.12s; } .voice .bars i:nth-child(3n+3) { animation-delay:.24s; }
+  @keyframes bar-play { 0%,100% { transform:none; } 50% { transform:scaleY(.35); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    /* Everything still lands on its final state — it just gets there at once. */
+    *, *::before, *::after {
+      animation-duration:1ms !important; animation-delay:0ms !important;
+      animation-iteration-count:1 !important; transition-duration:1ms !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -255,15 +357,15 @@
 <!-- Hero -->
 <section class="hero" id="top">
   <svg class="hero-waves" viewBox="0 0 1200 200" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-    <path d="M1200 40 C 900 10, 620 90, 320 60 S 60 20, -20 55" style="stroke:var(--pos)" stroke-width="2" opacity=".5"></path>
-    <path d="M1200 95 C 940 70, 640 140, 340 110 S 80 75, -20 108" style="stroke:var(--hi)" stroke-width="2" opacity=".4"></path>
-    <path d="M1200 150 C 920 125, 660 190, 350 162 S 70 130, -20 160" style="stroke:var(--acc)" stroke-width="2" opacity=".35"></path>
+    <path pathLength="1" d="M1200 40 C 900 10, 620 90, 320 60 S 60 20, -20 55" style="stroke:var(--pos)" stroke-width="2" opacity=".5"></path>
+    <path pathLength="1" d="M1200 95 C 940 70, 640 140, 340 110 S 80 75, -20 108" style="stroke:var(--hi)" stroke-width="2" opacity=".4"></path>
+    <path pathLength="1" d="M1200 150 C 920 125, 660 190, 350 162 S 70 130, -20 160" style="stroke:var(--acc)" stroke-width="2" opacity=".35"></path>
   </svg>
   <div class="wrap">
     <div class="hero-grid">
       <div>
         <span class="kicker">Future Caribbean · Open Track</span>
-        <h1>Tradewind</h1>
+        <h1><span class="line">Tradewind</span></h1>
         <p class="tag">One profile, every island.</p>
         <p class="sub">The Caribbean labour rail — agentic infrastructure that moves the region's workers into the region's jobs.</p>
       </div>
@@ -278,9 +380,9 @@
 
 <!-- The initial idea -->
 <section id="idea">
-  <div class="wrap">
+  <div class="wrap rv">
     <span class="kicker sec-kicker">The initial idea</span>
-    <div class="split">
+    <div class="split rv">
       <div>
         <h2 class="headline">Your own agent, living in WhatsApp, whose only job is <span class="gold">getting you a job.</span></h2>
         <p class="sec-note" style="margin-top:0;">It started with an open source project that caught fire: an agentic framework that reads job postings, scores them against your background, tailors your CV, drafts the cover letter and preps you for the interview. Tens of thousands of people starred it in weeks. Its author used it to send 69 applications and land an offer.</p>
@@ -301,7 +403,7 @@
         </div>
       </div>
     </div>
-    <div class="idea-cards">
+    <div class="idea-cards rv-grid">
       <div class="fcard">
         <h3>The surface</h3>
         <span class="from">from a terminal command</span>
@@ -324,10 +426,10 @@
 
 <!-- The insight -->
 <section id="insight">
-  <div class="wrap">
+  <div class="wrap rv">
     <span class="kicker sec-kicker">The insight</span>
     <h2 class="headline">On many islands, <span class="gold">every job vacancy is posted by law.</span><br>Nobody has built on it.</h2>
-    <div class="stats">
+    <div class="stats rv-grid">
       <div class="stat"><b>1,607</b><span>live postings — the entire formal Cayman market</span></div>
       <div class="stat"><b>2×/day</b><span>full-market pull, every day since July</span></div>
       <div class="stat"><b>100%</b><span>coverage guaranteed by the work-permit process</span></div>
@@ -339,9 +441,9 @@
 
 <!-- Working today -->
 <section id="working">
-  <div class="wrap">
+  <div class="wrap rv">
     <span class="kicker sec-kicker">Working today — not a mock-up</span>
-    <div class="pill-flow">
+    <div class="pill-flow rv-grid">
       <span class="pill">WhatsApp interview <em>voice-note-first</em></span>
       <span class="arrow">→</span>
       <span class="pill">Two-stage matcher <em>immigration-aware</em></span>
@@ -361,9 +463,9 @@
 
 <!-- The interface -->
 <section id="interface">
-  <div class="wrap">
+  <div class="wrap rv">
     <span class="kicker sec-kicker">The interface</span>
-    <div class="split">
+    <div class="split rv">
       <div>
         <h2 class="headline">Lives where the Caribbean <span class="gold">already is.</span></h2>
         <ul class="arrow-list">
@@ -405,9 +507,9 @@
 
 <!-- The agentic workflow -->
 <section id="workflow">
-  <div class="wrap">
+  <div class="wrap rv">
     <span class="kicker sec-kicker">The agentic workflow</span>
-    <div class="flow-cards">
+    <div class="flow-cards rv-grid">
       <div class="fcard">
         <h3>Data sources</h3>
         <div class="chips">
@@ -435,7 +537,7 @@
         </div>
       </div>
     </div>
-    <div class="steps">
+    <div class="steps rv-grid">
       <div class="step"><span class="num">01</span>WhatsApp onboarding<small>voice-note interview</small></div>
       <div class="step gate"><span class="num">02</span><b>🧑 gate</b><small>profile confirmed</small></div>
       <div class="step"><span class="num">03</span>Stage 1 prefilter<small>deterministic · recall-first</small></div>
@@ -456,9 +558,9 @@
 
 <!-- The big idea -->
 <section id="vision">
-  <div class="wrap">
+  <div class="wrap rv">
     <span class="kicker sec-kicker">The big idea</span>
-    <div class="split">
+    <div class="split rv">
       <div>
         <h2 class="headline">The Caribbean loses its people <span class="gold">and</span> imports its workers.</h2>
         <p class="sec-note" style="margin-top:0;">Brain drain and labour shortage at once — because a worker on one island <b>can't see the job one island over</b>. A coordination failure, and those are solvable.</p>
@@ -473,27 +575,31 @@
           <defs>
             <radialGradient id="twg" cx="50%" cy="50%"><stop offset="0%" style="stop-color:var(--hi)" stop-opacity=".9"></stop><stop offset="100%" style="stop-color:var(--hi)" stop-opacity="0"></stop></radialGradient>
           </defs>
-          <path d="M120 235 Q 240 40 370 75" style="stroke:var(--pos)" stroke-width="1.6" fill="none" opacity=".7"></path>
-          <path d="M120 235 Q 150 200 178 226" style="stroke:var(--pos)" stroke-width="1.6" fill="none" opacity=".7"></path>
-          <path d="M120 235 Q 280 260 388 355" style="stroke:var(--pos)" stroke-width="1.6" fill="none" opacity=".7"></path>
-          <path d="M120 235 Q 260 190 402 300" style="stroke:var(--pos)" stroke-width="1.4" fill="none" opacity=".45"></path>
-          <path d="M120 235 Q 210 170 300 205" style="stroke:var(--pos)" stroke-width="1.4" fill="none" opacity=".45"></path>
-          <circle cx="120" cy="235" r="9" style="fill:var(--acc)"></circle><circle cx="120" cy="235" r="20" fill="url(#twg)"></circle>
-          <text x="120" y="268" style="fill:var(--ink)" font-size="14" text-anchor="middle" font-weight="600">Cayman · live</text>
-          <circle cx="370" cy="75" r="7" style="fill:var(--hi)"></circle>
-          <text x="370" y="56" style="fill:var(--dim)" font-size="13" text-anchor="middle">Bermuda · island #2</text>
-          <circle cx="178" cy="226" r="6" style="fill:var(--pos)" opacity=".9"></circle>
-          <text x="178" y="212" style="fill:var(--dim)" font-size="12" text-anchor="middle">Jamaica</text>
-          <circle cx="300" cy="205" r="4.5" style="fill:var(--pos)" opacity=".7"></circle>
-          <circle cx="335" cy="235" r="4.5" style="fill:var(--pos)" opacity=".7"></circle>
-          <circle cx="402" cy="300" r="5" style="fill:var(--pos)" opacity=".8"></circle>
-          <text x="402" y="288" style="fill:var(--dim)" font-size="12" text-anchor="middle">Barbados</text>
-          <circle cx="388" cy="355" r="6" style="fill:var(--pos)" opacity=".9"></circle>
-          <text x="388" y="382" style="fill:var(--dim)" font-size="12" text-anchor="middle">Trinidad</text>
-          <circle cx="205" cy="120" r="4.5" style="fill:var(--pos)" opacity=".6"></circle>
-          <text x="205" y="106" style="fill:var(--dim)" font-size="12" text-anchor="middle">Bahamas</text>
-          <circle cx="248" cy="215" r="4.5" style="fill:var(--pos)" opacity=".6"></circle>
-          <text x="264" y="405" style="fill:var(--dim)" font-size="13" text-anchor="middle" opacity=".85">44 million people · ~30 markets · one rail</text>
+          <!-- --i sequences the draw: the hub lands first, then each link with
+               its island and label trailing behind it. --o is the resting
+               opacity the pop/fade animates back up to. -->
+          <path class="link" pathLength="1" d="M120 235 Q 240 40 370 75" style="stroke:var(--pos);--i:0" stroke-width="1.6" fill="none" opacity=".7"></path>
+          <path class="link" pathLength="1" d="M120 235 Q 150 200 178 226" style="stroke:var(--pos);--i:1" stroke-width="1.6" fill="none" opacity=".7"></path>
+          <path class="link" pathLength="1" d="M120 235 Q 280 260 388 355" style="stroke:var(--pos);--i:2" stroke-width="1.6" fill="none" opacity=".7"></path>
+          <path class="link" pathLength="1" d="M120 235 Q 260 190 402 300" style="stroke:var(--pos);--i:3" stroke-width="1.4" fill="none" opacity=".45"></path>
+          <path class="link" pathLength="1" d="M120 235 Q 210 170 300 205" style="stroke:var(--pos);--i:4" stroke-width="1.4" fill="none" opacity=".45"></path>
+          <circle class="node" cx="120" cy="235" r="9" style="fill:var(--acc);--i:-4"></circle><circle class="node" cx="120" cy="235" r="20" fill="url(#twg)" style="--i:-4"></circle>
+          <circle class="ping" cx="120" cy="235" r="9" style="stroke:var(--acc)" stroke-width="1.5" fill="none"></circle>
+          <text class="label" x="120" y="268" style="fill:var(--ink);--i:-4" font-size="14" text-anchor="middle" font-weight="600">Cayman · live</text>
+          <circle class="node" cx="370" cy="75" r="7" style="fill:var(--hi);--i:0"></circle>
+          <text class="label" x="370" y="56" style="fill:var(--dim);--i:0" font-size="13" text-anchor="middle">Bermuda · island #2</text>
+          <circle class="node" cx="178" cy="226" r="6" style="fill:var(--pos);--i:1;--o:.9" opacity=".9"></circle>
+          <text class="label" x="178" y="212" style="fill:var(--dim);--i:1" font-size="12" text-anchor="middle">Jamaica</text>
+          <circle class="node" cx="300" cy="205" r="4.5" style="fill:var(--pos);--i:4;--o:.7" opacity=".7"></circle>
+          <circle class="node" cx="335" cy="235" r="4.5" style="fill:var(--pos);--i:5;--o:.7" opacity=".7"></circle>
+          <circle class="node" cx="402" cy="300" r="5" style="fill:var(--pos);--i:3;--o:.8" opacity=".8"></circle>
+          <text class="label" x="402" y="288" style="fill:var(--dim);--i:3" font-size="12" text-anchor="middle">Barbados</text>
+          <circle class="node" cx="388" cy="355" r="6" style="fill:var(--pos);--i:2;--o:.9" opacity=".9"></circle>
+          <text class="label" x="388" y="382" style="fill:var(--dim);--i:2" font-size="12" text-anchor="middle">Trinidad</text>
+          <circle class="node" cx="205" cy="120" r="4.5" style="fill:var(--pos);--i:5;--o:.6" opacity=".6"></circle>
+          <text class="label" x="205" y="106" style="fill:var(--dim);--i:5" font-size="12" text-anchor="middle">Bahamas</text>
+          <circle class="node" cx="248" cy="215" r="4.5" style="fill:var(--pos);--i:6;--o:.6" opacity=".6"></circle>
+          <text class="label" x="264" y="405" style="fill:var(--dim);--i:7;--o:.85" font-size="13" text-anchor="middle" opacity=".85">44 million people · ~30 markets · one rail</text>
         </svg>
       </div>
     </div>
@@ -502,10 +608,10 @@
 
 <!-- Why me · why now -->
 <section id="why">
-  <div class="wrap">
+  <div class="wrap rv">
     <span class="kicker sec-kicker">Why me · why now</span>
     <h2 class="headline">The dataset compounds every day.<br>I'm the only one collecting it.</h2>
-    <ul class="arrow-list">
+    <ul class="arrow-list rv-grid">
       <li><span>Built &amp; ran a profitable mobile social network for <b>10 years</b> <span class="dim">— the long version of a company</span></span></li>
       <li><span>On-island, technical, full-time <span class="dim">— 8 months of intensive agentic building</span></span></li>
       <li><span>Whole-market coverage is a legal guarantee, not a promise <span class="dim">— and it's already flowing</span></span></li>
@@ -549,6 +655,99 @@
     setActive(current ? navFor.get(current) : null);
   }, { rootMargin: '-25% 0px -70% 0px' });
   navFor.forEach((_, section) => io.observe(section));
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  // Fire a one-shot choreography the first time an element is properly in view.
+  const onceInView = (el, run, threshold = .25) => {
+    new IntersectionObserver((entries, obs) => {
+      if (entries.some(e => e.isIntersecting)) { obs.disconnect(); run(); }
+    }, { threshold }).observe(el);
+  };
+
+  // Section content rises in as it reaches the fold. Children are observed
+  // individually, so a tall section staggers itself by scroll position; --s
+  // adds the extra beat between items that share a grid row.
+  if (!reduced) {
+    const revealIO = new IntersectionObserver((entries, obs) => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        obs.unobserve(e.target);
+        e.target.classList.add('in');
+      });
+    }, { rootMargin: '0px 0px -12% 0px' });
+
+    document.querySelectorAll('.rv, .rv-grid').forEach(group => {
+      const staggered = group.classList.contains('rv-grid');
+      group.classList.add('rv-on');
+      [...group.children].forEach((child, i) => {
+        // A container that stages its own children isn't itself revealed.
+        if (child.matches('.rv, .rv-grid')) return;
+        if (staggered) child.style.setProperty('--s', i % 4);
+        revealIO.observe(child);
+      });
+    });
+  }
+
+  // The map draws itself outward from Cayman.
+  const mapWrap = document.querySelector('.map-wrap');
+  if (!reduced) {
+    mapWrap.classList.add('seq');
+    onceInView(mapWrap, () => mapWrap.classList.add('in-view'));
+  }
+
+  // The chat plays itself once — typing beat, message, voice note, read ticks.
+  // Under reduced motion none of this exists: the thread is left exactly as it
+  // is authored, which is already the finished conversation.
+  if (!reduced) {
+    const phone = document.querySelector('.phone');
+    const chat = phone.querySelector('.ph-chat');
+    const msgs = [...chat.querySelectorAll('.msg')];
+    const typing = document.createElement('div');
+    typing.className = 'msg in typing';
+    typing.innerHTML = '<i></i><i></i><i></i>';
+    chat.append(typing);
+
+    phone.classList.add('seq');
+    // Lock the thread to the height it needs at its fullest, so messages
+    // arriving fill downward into a box that never changes size — the phone and
+    // the page around it stay put for the whole sequence.
+    const lock = () => {
+      chat.classList.add('measure');
+      chat.style.height = 'auto';
+      chat.style.height = chat.scrollHeight + 'px';
+      chat.classList.remove('measure');
+    };
+    const play = async () => {
+      for (const m of msgs) {
+        if (m.classList.contains('in')) {
+          typing.classList.add('shown');
+          await wait(560 + Math.min(m.textContent.length * 7, 820));
+          typing.classList.remove('shown');
+          await wait(150);
+        } else {
+          await wait(720);
+        }
+        m.classList.add('shown');
+        const voice = m.querySelector('.voice');
+        if (voice) { voice.classList.add('playing'); wait(2600).then(() => voice.classList.remove('playing')); }
+        if (m.classList.contains('out')) wait(650).then(() => m.classList.add('read'));
+      }
+    };
+    // Re-measure on any width change — that covers first layout and resize
+    // alike, and never measures a phone that hasn't been laid out yet. Keyed on
+    // width so locking the height back in doesn't re-trigger the observer.
+    let lockedAt = 0;
+    new ResizeObserver(() => {
+      const w = phone.offsetWidth;
+      if (w && w !== lockedAt) { lockedAt = w; lock(); }
+    }).observe(phone);
+    // Fonts change the wrapping, not the width, so that needs its own re-measure.
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => {
+      if (lockedAt) lock();
+      onceInView(phone, play, .2);
+    });
+  }
 </script>
 </body>
 </html>
