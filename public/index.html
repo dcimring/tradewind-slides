@@ -64,8 +64,13 @@
     border-bottom:1px solid var(--line);
   }
   .nav-inner { max-width:1200px; margin:0 auto; height:100%; padding:0 clamp(20px,4vw,32px); display:flex; align-items:center; justify-content:space-between; gap:24px; }
-  .brand { font-family:var(--display-font); font-weight:800; font-size:22px; letter-spacing:-0.02em; color:var(--ink); text-decoration:none; display:flex; align-items:baseline; gap:10px; }
+  .brand { font-family:var(--display-font); font-weight:800; font-size:22px; letter-spacing:-0.02em; color:var(--ink); text-decoration:none; display:flex; align-items:center; gap:10px; }
+  .brand img { width:44px; height:44px; flex:0 0 auto; }
+  .brand .brand-text { display:flex; align-items:baseline; gap:10px; }
   .brand small { font-family:'Spline Sans Mono',monospace; font-size:10px; letter-spacing:.28em; text-transform:uppercase; color:var(--acc); font-weight:600; }
+  /* Below ~400px the domain crowds the hamburger; it's already in the hero
+     foot and the footer, so drop it rather than shrink the wordmark. */
+  @media (max-width: 400px) { .brand small { display:none; } }
   .nav-links { display:flex; align-items:center; gap:clamp(14px,2vw,28px); list-style:none; margin:0; padding:0; }
   .nav-links a { position:relative; font-size:15px; font-weight:500; color:var(--ink); text-decoration:none; opacity:.82; white-space:nowrap; transition:color .18s, opacity .18s; }
   .nav-links a:hover { opacity:1; color:var(--acc); }
@@ -103,7 +108,7 @@
   .hero .tag { margin:clamp(16px,2vw,26px) 0 0; font-size:clamp(22px,3.2vw,40px); font-weight:500; }
   .hero .sub { margin:clamp(14px,2vw,22px) 0 0; font-size:clamp(16px,2vw,24px); line-height:1.5; color:var(--dim); max-width:46ch; }
   .hero .kicker { margin-bottom:clamp(18px,2.5vw,32px); display:block; }
-  .hero-logo { width:clamp(200px,26vw,340px); height:auto; display:block; }
+  .hero-logo { width:clamp(250px,33vw,440px); height:auto; display:block; }
   .hero-foot { display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px 40px; font-size:clamp(13px,1.3vw,16px); color:var(--dim); letter-spacing:.08em; margin-top:clamp(40px,6vw,80px); }
   @media (max-width: 760px) {
     .hero { min-height:0; }
@@ -228,7 +233,10 @@
 
 <nav>
   <div class="nav-inner">
-    <a class="brand" href="#top">Tradewind <small>caribbean.work</small></a>
+    <a class="brand" href="#top">
+      <img src="uploads/tradewind-logo.png" alt="" width="940" height="940">
+      <span class="brand-text">Tradewind <small>caribbean.work</small></span>
+    </a>
     <button class="nav-toggle" aria-label="Menu" aria-expanded="false">
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </button>
@@ -259,7 +267,7 @@
         <p class="tag">One profile, every island.</p>
         <p class="sub">The Caribbean labour rail — agentic infrastructure that moves the region's workers into the region's jobs.</p>
       </div>
-      <img class="hero-logo" src="uploads/tradewind-logo.png" alt="Tradewind" width="627" height="627">
+      <img class="hero-logo" src="uploads/tradewind-logo.png" alt="Tradewind" width="940" height="940">
     </div>
     <div class="hero-foot">
       <span>Daniel Cimring · repeat founder · Cayman Islands</span>
