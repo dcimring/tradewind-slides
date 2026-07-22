@@ -118,6 +118,23 @@
   .headline { margin:0 0 clamp(28px,4vw,56px); font-size:clamp(28px,4.6vw,54px); line-height:1.14; max-width:26ch; }
   .headline .gold { color:var(--hi); }
 
+  /* The initial idea */
+  .repo-card { border:1px solid var(--line); border-radius:18px; background:var(--card); padding:clamp(22px,3vw,32px); }
+  .repo-card .eyebrow { font-family:'Spline Sans Mono',monospace; font-size:clamp(11px,1.1vw,13px); letter-spacing:.24em; text-transform:uppercase; color:var(--dim); }
+  .repo-card .path { display:block; margin:14px 0 0; font-family:'Spline Sans Mono',monospace; font-size:clamp(15px,1.7vw,19px); font-weight:600; word-break:break-word; }
+  .repo-card .counts { display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:14px; font-family:'Spline Sans Mono',monospace; font-size:clamp(14px,1.5vw,17px); font-weight:600; color:var(--hi); }
+  .repo-card .desc { margin:18px 0 0; font-size:clamp(15px,1.6vw,18px); line-height:1.55; color:var(--dim); }
+  .repo-card .receipt { margin-top:20px; padding-left:16px; border-left:2px solid var(--acc); }
+  .repo-card .receipt b { display:block; font-size:clamp(17px,1.9vw,21px); }
+  .repo-card .receipt small { display:block; color:var(--dim); font-size:clamp(13px,1.3vw,15px); margin-top:4px; }
+
+  .idea-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:clamp(32px,5vw,60px); }
+  .idea-cards .fcard { font-size:clamp(15px,1.6vw,18px); line-height:1.5; }
+  .idea-cards .from { color:var(--dim); }
+  .idea-cards .to { display:block; margin-top:8px; }
+  .idea-cards .to em { font-style:normal; color:var(--pos); font-weight:600; }
+  @media (max-width: 900px) { .idea-cards { grid-template-columns:1fr; } }
+
   /* Insight stats */
   .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:clamp(20px,3vw,48px); }
   .stat { border-top:1px solid var(--line); padding-top:clamp(14px,2vw,24px); }
@@ -218,6 +235,7 @@
       <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </button>
     <ul class="nav-links" id="navLinks">
+      <li><a href="#idea">The idea</a></li>
       <li><a href="#insight">The insight</a></li>
       <li><a href="#working">Working today</a></li>
       <li><a href="#interface">Interface</a></li>
@@ -249,6 +267,52 @@
       <span>Daniel Cimring · repeat founder · Cayman Islands</span>
       <span>caribbean.work</span>
     </div>
+  </div>
+</section>
+
+<!-- The initial idea -->
+<section id="idea">
+  <div class="wrap">
+    <span class="kicker sec-kicker">The initial idea</span>
+    <div class="split">
+      <div>
+        <h2 class="headline">Your own agent, living in WhatsApp, whose only job is <span class="gold">getting you a job.</span></h2>
+        <p class="sec-note" style="margin-top:0;">It started with an open source project that caught fire: an agentic framework that reads job postings, scores them against your background, tailors your CV, drafts the cover letter and preps you for the interview. Tens of thousands of people starred it in weeks. Its author used it to send 69 applications and land an offer.</p>
+        <ul class="arrow-list" style="margin-top:clamp(24px,3vw,40px);">
+          <li><span>The whole application loop is agentic <span class="dim">— evaluate, tailor, draft, prep, track</span></span></li>
+          <li><span>The demand is not theoretical <span class="dim">— tens of thousands of stars, thousands of forks, in weeks</span></span></li>
+          <li><span>But it lives on a laptop <span class="dim">— Python, LaTeX, a terminal and a Claude Code subscription</span></span></li>
+        </ul>
+      </div>
+      <div class="repo-card">
+        <span class="eyebrow">Open source · the proof</span>
+        <a class="path" href="https://github.com/MadsLorentzen/ai-job-search" target="_blank" rel="noopener">MadsLorentzen/ai-job-search</a>
+        <div class="counts"><span>★ 25k+ stars</span><span>⑂ 8k+ forks</span></div>
+        <p class="desc">The job search that runs on your machine — evaluate postings, tailor CVs, write cover letters, prep interviews.</p>
+        <div class="receipt">
+          <b>69 applications · 1 offer</b>
+          <small>its author, on himself</small>
+        </div>
+      </div>
+    </div>
+    <div class="idea-cards">
+      <div class="fcard">
+        <h3>The surface</h3>
+        <span class="from">from a terminal command</span>
+        <span class="to">to <em>a WhatsApp thread</em> — no install, voice notes instead of config files</span>
+      </div>
+      <div class="fcard">
+        <h3>The posture</h3>
+        <span class="from">from you remembering to run it</span>
+        <span class="to">to <em>it running for you</em> — always on, watching the market while you work</span>
+      </div>
+      <div class="fcard">
+        <h3>The data</h3>
+        <span class="from">from whatever job boards you can scrape</span>
+        <span class="to">to <em>every vacancy on the island</em>, guaranteed</span>
+      </div>
+    </div>
+    <p class="sec-note">The first two were product decisions. <b>The third one turned out to be the whole company.</b> →</p>
   </div>
 </section>
 
