@@ -2,3 +2,4 @@
 .thumbnail
 .wrangler/
 node_modules/
+.claude/
